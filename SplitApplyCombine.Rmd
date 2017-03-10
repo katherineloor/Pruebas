@@ -44,7 +44,7 @@ Uma tarefa comum que encontrará ao trabalhar com dados, é que você desejará 
 Deveriamos executar `calcGPD` e então pegar as médias por cada continente:
 
 ```{r echo = FALSE}
-gapminder<-read.csv(file="~/2_LIBROS/MESTRADO/COMPUTACIONAL/data/gapminder-FiveYearData.csv")
+gapminder<-read.csv(file="C:/Users/kloor/Documents/git/Pruebas/data/gapminder-FiveYearData.csv")
 ```
 
 ```{r echo = TRUE}
