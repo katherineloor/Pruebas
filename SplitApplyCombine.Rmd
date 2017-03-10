@@ -1,0 +1,126 @@
+---
+title: "Split-Apply-Combine"
+author: "Katherine Loor"
+date: "9 de marzo de 2017"
+output: 
+  rmarkdown::html_document:
+    theme: cerulean
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+|  Visão Geral                                                                                   |
+|:------------------------|:-------------------------------------------------------------------  |
+| **Ensino:** 30 mim      |**Questões**                                                          |
+| **Exercícios:** 30 mim  |Como posso fazer diferentes cálculos em diferentes conjuntos de dados?|
+|                         |**Objetivos**                                                         |
+|                         |Poder usar a estrategia de split-apply-combine para anàlise de dados. |
+|                         |                                                                      |
+
+
+Anteriormente analisamos como usar funções para simplificar o seu código. Nós definimos a função `calcGDP`, que pega o conjunto de dados gapminder, e miltiplica a população com a coluna do PIB per capita. Também definimos argumentos adicionais para que possamos filtrar por `year` e `country`:
+
+```{r echo = TRUE}
+# Takes a dataset and multiplies the population column
+# with the GDP per capita column.
+calcGDP <- function(dat, year=NULL, country=NULL) {
+  if(!is.null(year)) {
+    dat <- dat[dat$year %in% year, ]
+  }
+  if (!is.null(country)) {
+    dat <- dat[dat$country %in% country,]
+  }
+  gdp <- dat$pop * dat$gdpPercap
+
+  new <- cbind(dat, gdp=gdp)
+  return(new)
+}
+```
+
+Uma tarefa comum que encontrará ao trabalhar com dados, é que você desejará executar cálculos em diferentes grupos dentro dos dados. Acima, estávamos calculando simplesmente o PIB miltiplicando duas colunas juntas. Mas e se quiséssemos calcular o PIB médio por continente? 
+
+Deveriamos executar `calcGPD` e então pegar as médias por cada continente:
+
+```{r echo = FALSE}
+gapminder<-read.csv(file="~/2_LIBROS/MESTRADO/COMPUTACIONAL/data/gapminder-FiveYearData.csv")
+```
+
+```{r echo = TRUE}
+withGDP <- calcGDP(gapminder)
+mean(withGDP[withGDP$continent == "Africa", "gdp"])
+```
+
+```{r echo = TRUE}
+mean(withGDP[withGDP$continent == "Americas", "gdp"])
+```
+
+```{r echo = TRUE}
+mean(withGDP[withGDP$continent == "Asia", "gdp"])
+```
+
+Mas isso não é *agradável*. Sim, ussando uma função, você pode reducir uma quantidade substancial de repetições. Isso **é** bom. Porém ainda há repetição. Repetindo custará-lhe tempo, agora e mais tarde, e potencialmente introduzirá alguns erros desagradáveis.
+
+Poderíamos escrever uma nova função que seja flexível como `calcGDP`, mas isso também requere uma quantidade substancial de esforço e testes até estar pronta.
+
+A síntese do problema que estamos revelando aqui é conhecido como "split-apply-combine":
+
+![](C:\Users\kloor\Documents\2_LIBROS\MESTRADO\COMPUTACIONAL\tabla1.png)
+
+Nós queremos divivir nossos dados entre grupos, neste caso continentes, aplicar alguns cálculos nesse grupo, e depois opcionalmente combinar os resultados. 
+
+##O pacote plyr
+Para alguns de vocês que tem ussado R antes, podería estar familiarizado com o usso de familia de funções. Agora, vamos apresentar outro método para resolver o problema “split-apply-combine”. O pacote plyr fornece um conjunto de funções que encontraremos mais agradáveis para resolver este problema.
+
+Instalamos este pacote em uma tarefa anterior. Vamos carregá-lo agora:
+
+```{r echo = TRUE}
+library(plyr)
+```
+
+Plyr tem funções para operações entre listas, data.frames e arreglos (matrizes, ou n-dimensional vetores). Cada função executa:
+
+
+A splitting operation
+Apply a function on each split in turn.
+Recombine output data as a single data object.
+The functions are named based on the data structure they expect as input, and the data structure you want returned as output: [a]rray, [l]ist, or [d]ata.frame. The first letter corresponds to the input data structure, the second letter to the output data structure, and then the rest of the function is named “ply”.
+
+This gives us 9 core functions **ply. There are an additional three functions which will only perform the split and apply steps, and not any combine step. They’re named by their input data type and represent null output by a _ (see table)
+
+Note here that plyr’s use of “array” is different to R’s, an array in ply can include a vector or matrix.
+
+
+```{r echo = FALSE, include=FALSE}
+#library(knitr)
+#df<-
+#kable( df , caption = "BBDD `airquality` con `kable()`"
+#       , align = c('l', 'c', 'r', 'r', 'c', 'l')
+#       , col.names = c("Ozono","Solar.R","Viento","Temp","Mes","Día")
+#       , row.names = TRUE
+#       , digits = 1
+#       , format.args = list( decimal.mark = ","))
+```
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
