@@ -3,7 +3,7 @@ title: "Split-Apply-Combine"
 author: "Katherine Loor"
 date: "9 de marzo de 2017"
 output: 
-  rmarkdown::html_document:
+    rmarkdown::html_document:
     theme: cerulean
 ---
 
@@ -66,7 +66,7 @@ Poderíamos escrever uma nova função que seja flexível como `calcGDP`, mas is
 
 A síntese do problema que estamos revelando aqui é conhecido como "split-apply-combine":
 
-![](C:\Users\kloor\Documents\2_LIBROS\MESTRADO\COMPUTACIONAL\tabla1.png)
+![](C:\Users\kloor\Documents\git\Pruebas\Imagenes\tabla1.png)
 
 Nós queremos divivir nossos dados entre grupos, neste caso continentes, aplicar alguns cálculos nesse grupo, e depois opcionalmente combinar os resultados. 
 
@@ -79,48 +79,95 @@ Instalamos este pacote em uma tarefa anterior. Vamos carregá-lo agora:
 library(plyr)
 ```
 
-Plyr tem funções para operações entre listas, data.frames e arreglos (matrizes, ou n-dimensional vetores). Cada função executa:
+Plyr tem funções para operações entre `lists`, `data.frames` e `arrays` (matrizes, ou n-dimensional vetores). Cada função executa:
+1. Uma operação de divisão.
+2. Aplique uma função em cada divisão.
+3. Recombine os dados da saída como um único objeto de dados.
 
+As funções são chamadas baseado na estructura dos dados eles esperam como entrada, e a estructura dos dados que se deseja como saída: [a]rray, [l]ist, ou [d]ata.frame. A primeira letra corresponde à  estructura dos dados da entrada, a segunda letra à estructura dos dados da saída, e o resto da função é chamada "ply".
 
-A splitting operation
-Apply a function on each split in turn.
-Recombine output data as a single data object.
-The functions are named based on the data structure they expect as input, and the data structure you want returned as output: [a]rray, [l]ist, or [d]ata.frame. The first letter corresponds to the input data structure, the second letter to the output data structure, and then the rest of the function is named “ply”.
+Isso nós dá 9 funções principais **ply. Existem três funções adicionais que só executarão as etapas de divisão e aplicação e não qualquer etapa de combinação. Eles são chamados por seu tipo de dados de entrada e representam uma saída vazía por um _ (veja a tabela)
 
-This gives us 9 core functions **ply. There are an additional three functions which will only perform the split and apply steps, and not any combine step. They’re named by their input data type and represent null output by a _ (see table)
+Note aqui que o uso dos arreglos de plyr é diferente que em R, um arreglo em ply pode incluir um vetor ou uma matriz.
+![](C:\Users\kloor\Documents\git\Pruebas\Imagenes\tabla2.png)
 
-Note here that plyr’s use of “array” is different to R’s, an array in ply can include a vector or matrix.
+Cada uma das funções de xxply (daply, ddply, llply, laply, ...) tem a mesma estructura e tem 4 características e estructura chaves:
 
-
-```{r echo = FALSE, include=FALSE}
-#library(knitr)
-#df<-
-#kable( df , caption = "BBDD `airquality` con `kable()`"
-#       , align = c('l', 'c', 'r', 'r', 'c', 'l')
-#       , col.names = c("Ozono","Solar.R","Viento","Temp","Mes","Día")
-#       , row.names = TRUE
-#       , digits = 1
-#       , format.args = list( decimal.mark = ","))
+```
+xxply(.data, .variables, .fun)
 ```
 
+A primeira letra do nome da função dá o tipo de entrada e o segundo dá o tipo de dado da saída.
+* data - dá o objeto de dados a ser processado
+* variables - identifica as variáveis de divisão
+* fun - dá a função que será chamada em cada fase
 
+Agora podemos rapidamente calcular a média GDP por continente:
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r echo = TRUE, include=TRUE}
+ddply(
+ .data = calcGDP(gapminder),
+ .variables = "continent",
+ .fun = function(x) mean(x$gdp)
+)
 ```
 
-## Including Plots
+Vamos revisar o código anterior:
 
-You can also embed plots, for example:
+* A função `ddply` se alimenta de um `data.frame` (função começa com d) e retorna outro `data.frame` (segunda letra é d) 
+* O primeiro argumento que demos foi a `data.frame` com o qual queríamos operar: neste caso os dados de gapminder. Chamamos primeiro `calcGDP` tal que ele tería agregada uma coluna adicional `gdp`. 
+* O segundo argumento indicou nossos critérios de divisão: neste caso a coluna "continent". Note que nós demos o nome da coluna, não o valor da coluna como a gente tem feito anteriormente com subconjuntos. Plyr cuida desses detalhes de implementação por você.
+* O terceiro argumento é a função que queremos aplicar a cada grupo de dados. Temos que definir aqui nossa propria função curta: cada subconjunto de dados é armazenado em x,  o primeiro argumento de nossa função. Esta é uma função anônima: não a definimos em outro lugar, e ela não tem nome. Ela só existe dentro do âmbito de nossa chamada a ddply. 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+E se quissermos uma estructura de dados de saída diferente?:
+
+```{r echo = TRUE, include=TRUE}
+dlply(
+ .data = calcGDP(gapminder),
+ .variables = "continent",
+ .fun = function(x) mean(x$gdp)
+)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Nós chamamos a mesma função novamente, mas mudamos a segunda letra para uma l, assim a saída obtida foi uma lista.
+
+Pomos também especificar varias colunas para agrupar:
+
+```{r echo = TRUE, include=TRUE}
+ddply(
+ .data = calcGDP(gapminder),
+ .variables = c("continent", "year"),
+ .fun = function(x) mean(x$gdp)
+)
+```
+
+```{r echo = TRUE, include=TRUE}
+daply(
+ .data = calcGDP(gapminder),
+ .variables = c("continent", "year"),
+ .fun = function(x) mean(x$gdp)
+)
+```
+Você pode usar essas funções em lugar de "for loops" (e usualmente mais rapido). Para remplazar um "for loop", ponha o código que está no corpo do "for loop" em lugar da função anônima.
+
+```{r echo = TRUE, include=TRUE}
+d_ply(
+  .data=gapminder,
+  .variables = "continent",
+  .fun = function(x) {
+    meanGDPperCap <- mean(x$gdpPercap)
+    print(paste(
+      "A média do PIB per capita para", unique(x$continent),
+      "é", format(meanGDPperCap, big.mark=",")
+   ))
+  }
+)
+```
+
+|Dica: imprimir números                                                   |
+|:----------------------------------------------------------------------  |
+|A função `format` pode ser usada para melhorar a apresentação dos valores numéricos em mensagens|
+
+
+
+
